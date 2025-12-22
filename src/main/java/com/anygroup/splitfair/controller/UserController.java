@@ -3,6 +3,8 @@ package com.anygroup.splitfair.controller;
 import com.anygroup.splitfair.dto.Auth.FirebaseTokenRequest;
 import com.anygroup.splitfair.dto.UserDTO;
 import com.anygroup.splitfair.enums.UserStatus;
+import com.anygroup.splitfair.mapper.UserMapper;
+import com.anygroup.splitfair.repository.UserRepository;
 import com.anygroup.splitfair.service.UserService;
 import com.anygroup.splitfair.util.FirebaseTokenUtil;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class UserController {
 
     private final UserService userService;
 
+
     @Value("${app.file.avatar-storage:data/avatars}")
     private String avatarStorageLocation;
 
@@ -52,29 +55,6 @@ public class UserController {
         UserDTO created = userService.createUser(dto);
         return ResponseEntity.ok(created);
     }
-
-    @PostMapping("/google")
-    public ResponseEntity<UserDTO> createUserFromFirebase(
-            @RequestBody FirebaseTokenRequest request
-    ) {
-
-        var decoded = FirebaseTokenUtil.verify(request.getToken());
-
-        String email = decoded.getEmail();
-        String name = decoded.getName();
-        String avatar = decoded.getPicture();
-
-        UserDTO dto = new UserDTO();
-        dto.setEmail(email);
-        dto.setName(name);
-        dto.setAvatar(avatar);
-        dto.setStatus(UserStatus.ACTIVE);
-
-        UserDTO created = userService.createUser(dto);
-
-        return ResponseEntity.ok(created);
-    }
-
 
 
     @PutMapping("/{id}")
@@ -120,7 +100,6 @@ public class UserController {
         return ResponseEntity.ok(updatedUser);
     }
 
-    // 👇 THÊM ENDPOINT MỚI (Xem ảnh)
     @GetMapping("/avatar/{fileName:.+}")
     public ResponseEntity<Resource> serveAvatar(@PathVariable String fileName) throws IOException {
         Path dirPath = Paths.get(System.getProperty("user.dir"), avatarStorageLocation);

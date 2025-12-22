@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -25,15 +24,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserRepository userRepository;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
         String path = request.getServletPath();
-
-        //  Bỏ qua filter cho login/register
-        if (path.contains("/api/auth/login") || path.contains("/api/auth/register")) {
+        // 1. Bỏ qua cho các path public
+        if (path.contains("/api/auth/login") || path.contains("/api/auth/register") || path.contains("/api/auth/google")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -45,32 +41,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = header.substring(7);
+        if (jwtUtil.validateToken(token)) {
+            String email = jwtUtil.getEmailFromToken(token);
+            var optionalUser = userRepository.findByEmail(email);
 
-        if (!jwtUtil.validateToken(token)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+            if (optionalUser.isPresent()) {
+                var user = optionalUser.get();
+                var authority = new SimpleGrantedAuthority(user.getRole().getName().name());
 
-        String email = jwtUtil.getEmailFromToken(token);
+                // Đảm bảo mật khẩu không null cho Spring Security User
+                String password = user.getPassword() != null ? user.getPassword() : "PROTECTED";
 
-        var optionalUser = userRepository.findByEmail(email);
-        if (optionalUser.isPresent()) {
-            var user = optionalUser.get();
+                var authUser = new org.springframework.security.core.userdetails.User(
+                        user.getEmail(), password, List.of(authority));
 
-            //  Role.name là Enum → lấy chuỗi "LEADER", "ADMIN"
-            var authority = new SimpleGrantedAuthority(user.getRole().getName().name());
+                var authentication = new UsernamePasswordAuthenticationToken(
+                        authUser, null, authUser.getAuthorities());
 
-            var authUser = new User(
-                    user.getEmail(),
-                    user.getPassword(),
-                    List.of(authority)
-            );
-
-            var authentication = new UsernamePasswordAuthenticationToken(
-                    authUser, null, authUser.getAuthorities()
-            );
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         }
 
         filterChain.doFilter(request, response);

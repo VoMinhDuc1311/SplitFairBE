@@ -15,6 +15,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.anygroup.splitfair.dto.Auth.FirebaseTokenRequest;
+import com.anygroup.splitfair.util.FirebaseTokenUtil;
+import com.anygroup.splitfair.enums.UserStatus;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -107,5 +112,58 @@ public class AuthServiceImpl implements AuthService {
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+    }
+    @Override
+    public AuthResponse loginWithGoogle(FirebaseTokenRequest request) {
+        try {
+            var decoded = FirebaseTokenUtil.verify(request.getToken());
+            String email = decoded.getEmail();
+
+            // Tìm hoặc tạo mới User
+            User user = userRepository.findByEmail(email).orElseGet(() -> {
+                Role role = roleRepository.findByName(RoleType.USER)
+                        .orElseThrow(() -> new RuntimeException("Default role USER not found"));
+
+                // Sử dụng mật khẩu ngẫu nhiên để thỏa mãn cấu trúc DB và Security
+                String randomPassword = passwordEncoder.encode(UUID.randomUUID().toString() + "_GOOGLE");
+
+                User newUser = User.builder()
+                        .userName(decoded.getName() != null ? decoded.getName() : email.split("@")[0])
+                        .email(email)
+                        .password(randomPassword)
+                        .avatar(decoded.getPicture())
+                        .role(role)
+                        .status(UserStatus.ACTIVE)
+                        .build();
+
+                newUser = userRepository.save(newUser);
+
+
+
+                return newUser;
+            });
+
+            // Cập nhật lại Avatar từ Google nếu có thay đổi
+            if (decoded.getPicture() != null && !decoded.getPicture().equals(user.getAvatar())) {
+                user.setAvatar(decoded.getPicture());
+                userRepository.save(user);
+            }
+
+            // Tạo Token hệ thống
+            String systemToken = jwtUtil.generateToken(user.getEmail());
+
+            // Trả về AuthResponse (Đảm bảo đầy đủ các trường FE cần)
+            AuthResponse res = new AuthResponse();
+            res.setToken(systemToken);
+            res.setUserId(user.getId());
+            res.setUserName(user.getUserName());
+            res.setEmail(user.getEmail());
+            res.setRole(user.getRole().getName().name());
+            res.setAvatar(user.getAvatar());
+
+            return res;
+        } catch (Exception e) {
+            throw new RuntimeException("Xác thực Google thất bại: " + e.getMessage());
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.anygroup.splitfair.controller;
 import com.anygroup.splitfair.dto.Auth.*;
 import com.anygroup.splitfair.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
@@ -25,9 +26,17 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> loginWithGoogle(@RequestBody FirebaseTokenRequest request) {
+        return ResponseEntity.ok(authService.loginWithGoogle(request));
+    }
+
     @GetMapping("/account")
     public ResponseEntity<AuthResponse> getAccount(Authentication authentication) {
-        String email = ((User) authentication.getPrincipal()).getUsername();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String email = authentication.getName();
         return ResponseEntity.ok(authService.getAccount(email));
     }
 

@@ -27,7 +27,7 @@ public class User {
     @Column(nullable = false, unique = true, length = 250)
     private String email;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = true) // Đổi từ false sang true
     private String password;
 
     private String avatar;
