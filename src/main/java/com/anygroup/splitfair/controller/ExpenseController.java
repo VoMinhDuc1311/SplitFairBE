@@ -2,11 +2,15 @@ package com.anygroup.splitfair.controller;
 
 import com.anygroup.splitfair.dto.ExpenseDTO;
 import com.anygroup.splitfair.dto.PaymentStatDTO;
+import com.anygroup.splitfair.dto.PersonalExpenseStatDTO;
+import com.anygroup.splitfair.repository.UserRepository;
 import com.anygroup.splitfair.service.ExpenseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,6 +20,7 @@ import java.util.UUID;
 public class ExpenseController {
 
     private final ExpenseService expenseService;
+    private final UserRepository userRepository;
 
 
     @PostMapping
@@ -76,4 +81,34 @@ public class ExpenseController {
     public ResponseEntity<List<ExpenseDTO>> getExpensesByGroup(@PathVariable UUID groupId) {
         return ResponseEntity.ok(expenseService.getExpensesByGroup(groupId));
     }
+
+    @GetMapping("/me/statistics")
+    public ResponseEntity<PersonalExpenseStatDTO> personalStatistics(
+            @RequestParam String type,
+            @RequestParam String date,
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+        UUID userId = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"))
+                .getId();
+
+        LocalDate parsedDate = LocalDate.parse(date);
+
+        return switch (type) {
+            case "day" -> ResponseEntity.ok(
+                    expenseService.personalStatisticByDay(userId, parsedDate)
+            );
+            case "week" -> ResponseEntity.ok(
+                    expenseService.personalStatisticByWeek(userId, parsedDate)
+            );
+            case "month" -> ResponseEntity.ok(
+                    expenseService.personalStatisticByMonth(userId, parsedDate)
+            );
+            default -> throw new RuntimeException("Invalid statistic type");
+        };
+    }
+
+
+
 }

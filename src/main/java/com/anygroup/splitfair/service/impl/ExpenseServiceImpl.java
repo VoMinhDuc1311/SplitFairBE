@@ -2,6 +2,7 @@ package com.anygroup.splitfair.service.impl;
 
 import com.anygroup.splitfair.dto.ExpenseDTO;
 import com.anygroup.splitfair.dto.PaymentStatDTO;
+import com.anygroup.splitfair.dto.PersonalExpenseStatDTO;
 import com.anygroup.splitfair.enums.BillStatus;
 import com.anygroup.splitfair.enums.DebtStatus;
 import com.anygroup.splitfair.enums.ExpenseStatus;
@@ -15,6 +16,8 @@ import com.anygroup.splitfair.mapper.ExpenseMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.*;
+
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -254,6 +257,8 @@ public class ExpenseServiceImpl implements ExpenseService {
         return expenseRepository.getPaymentStatsByGroup(groupId);
     }
 
+
+
     @Override
     public List<ExpenseDTO> getExpensesByGroup(UUID groupId) {
         return expenseRepository.findByBill_Group_Id(groupId)
@@ -261,4 +266,93 @@ public class ExpenseServiceImpl implements ExpenseService {
                 .map(expenseMapper::toDTO)
                 .collect(Collectors.toList());
     }
+
+    private Instant[] buildTimeRange(LocalDate date, String type) {
+
+        ZoneId zone = ZoneId.systemDefault();
+
+        return switch (type) {
+            case "day" -> new Instant[]{
+                    date.atStartOfDay(zone).toInstant(),
+                    date.plusDays(1).atStartOfDay(zone).toInstant()
+            };
+
+            case "week" -> {
+                LocalDate monday = date.with(DayOfWeek.MONDAY);
+                LocalDate sunday = monday.plusDays(6);
+                yield new Instant[]{
+                        monday.atStartOfDay(zone).toInstant(),
+                        sunday.plusDays(1).atStartOfDay(zone).toInstant()
+                };
+            }
+
+            case "month" -> {
+                YearMonth month = YearMonth.from(date);
+                LocalDate start = month.atDay(1);
+                LocalDate end = month.atEndOfMonth();
+                yield new Instant[]{
+                        start.atStartOfDay(zone).toInstant(),
+                        end.plusDays(1).atStartOfDay(zone).toInstant()
+                };
+            }
+
+            default -> throw new RuntimeException("Invalid type");
+        };
+    }
+
+
+    @Override
+    public PersonalExpenseStatDTO personalStatisticByDay(UUID userId, LocalDate date) {
+
+        Instant[] range = buildTimeRange(date, "day");
+
+        BigDecimal total = expenseRepository.sumExpenseByUserAndTime(
+                userId, range[0], range[1]
+        );
+
+        PersonalExpenseStatDTO dto = new PersonalExpenseStatDTO();
+        dto.setUserId(userId);
+        dto.setTotalAmount(total);
+        dto.setFrom(range[0]);
+        dto.setTo(range[1]);
+
+        return dto;
+    }
+
+    @Override
+    public PersonalExpenseStatDTO personalStatisticByWeek(UUID userId, LocalDate date) {
+
+        Instant[] range = buildTimeRange(date, "week");
+
+        BigDecimal total = expenseRepository.sumExpenseByUserAndTime(
+                userId, range[0], range[1]
+        );
+
+        PersonalExpenseStatDTO dto = new PersonalExpenseStatDTO();
+        dto.setUserId(userId);
+        dto.setTotalAmount(total);
+        dto.setFrom(range[0]);
+        dto.setTo(range[1]);
+
+        return dto;
+    }
+
+    @Override
+    public PersonalExpenseStatDTO personalStatisticByMonth(UUID userId, LocalDate date) {
+
+        Instant[] range = buildTimeRange(date, "month");
+
+        BigDecimal total = expenseRepository.sumExpenseByUserAndTime(
+                userId, range[0], range[1]
+        );
+
+        PersonalExpenseStatDTO dto = new PersonalExpenseStatDTO();
+        dto.setUserId(userId);
+        dto.setTotalAmount(total);
+        dto.setFrom(range[0]);
+        dto.setTo(range[1]);
+
+        return dto;
+    }
+
 }

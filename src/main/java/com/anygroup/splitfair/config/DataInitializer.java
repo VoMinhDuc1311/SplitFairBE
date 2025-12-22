@@ -15,11 +15,11 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // for (RoleType type : RoleType.values()) {
-        //     if (!roleRepository.existsByName(type)) {
-        //         roleRepository.save(Role.builder().name(type).build());
-        //         System.out.println(" Created role: " + type);
-        //     }
-        // }
+         for (RoleType type : RoleType.values()) {
+             if (!roleRepository.existsByName(type)) {
+                 roleRepository.save(Role.builder().name(type).build());
+                 System.out.println(" Created role: " + type);
+             }
+         }
     }
 }

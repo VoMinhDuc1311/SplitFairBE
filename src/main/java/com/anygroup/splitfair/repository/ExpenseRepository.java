@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,4 +36,18 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
     List<Expense> findByBill_Group_Id(UUID groupId);
 
     void deleteByBill_Id(UUID billId);
+
+    @Query("""
+SELECT COALESCE(SUM(e.amount), 0)
+FROM Expense e
+WHERE e.paidBy.id = :userId
+AND e.createdTime BETWEEN :start AND :end
+AND (e.bill.isPayment IS NULL OR e.bill.isPayment = false)
+""")
+    BigDecimal sumExpenseByUserAndTime(
+            UUID userId,
+            Instant start,
+            Instant end
+    );
+
 }

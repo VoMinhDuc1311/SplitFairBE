@@ -2,7 +2,9 @@ package com.anygroup.splitfair.service;
 
 import com.anygroup.splitfair.dto.ExpenseDTO;
 import com.anygroup.splitfair.dto.PaymentStatDTO;
+import com.anygroup.splitfair.dto.PersonalExpenseStatDTO;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,4 +29,9 @@ public interface ExpenseService {
     List<PaymentStatDTO> getPaymentStatsByGroup(UUID groupId);
 
     List<ExpenseDTO> getExpensesByGroup(UUID groupId);
+    PersonalExpenseStatDTO personalStatisticByDay(UUID userId, LocalDate date);
+
+    PersonalExpenseStatDTO personalStatisticByWeek(UUID userId, LocalDate date);
+
+    PersonalExpenseStatDTO personalStatisticByMonth(UUID userId, LocalDate date);
 }
