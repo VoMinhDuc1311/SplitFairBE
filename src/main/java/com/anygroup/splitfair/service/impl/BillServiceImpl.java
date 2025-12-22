@@ -31,20 +31,20 @@ public class BillServiceImpl implements BillService {
     public BillDTO createBill(BillDTO dto) {
         Bill bill = billMapper.toEntity(dto);
 
-        // ✅ Mặc định: Bill mới tạo chưa có Expense → tổng tiền = 0
+        // Mặc định: Bill mới tạo chưa có Expense → tổng tiền = 0
         bill.setTotalAmount(BigDecimal.ZERO);
 
-        // ✅ Nếu status chưa có, gán DRAFT
+        //Nếu status chưa có, gán DRAFT
         if (bill.getStatus() == null) {
             bill.setStatus(BillStatus.DRAFT);
         }
 
-        // ✅ Nếu chưa có createdTime, tạo mới
+        // Nếu chưa có createdTime, tạo mới
         if (bill.getCreatedTime() == null) {
             bill.setCreatedTime(java.time.Instant.now());
         }
 
-        // ✅ Liên kết Group, Category, User
+        // Liên kết Group, Category, User
         if (dto.getGroupId() != null) {
             Group group = groupRepository.findById(dto.getGroupId())
                     .orElseThrow(() -> new RuntimeException("Group not found with id: " + dto.getGroupId()));
@@ -106,7 +106,7 @@ public class BillServiceImpl implements BillService {
         Bill existing = billRepository.findById(dto.getId())
                 .orElseThrow(() -> new RuntimeException("Bill not found with id: " + dto.getId()));
 
-        // ✅ Chỉ cập nhật khi có giá trị mới
+        //  Chỉ cập nhật khi có giá trị mới
         if (dto.getDescription() != null) {
             existing.setDescription(dto.getDescription());
         }

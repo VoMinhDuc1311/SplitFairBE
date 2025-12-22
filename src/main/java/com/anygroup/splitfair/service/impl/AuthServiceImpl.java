@@ -53,10 +53,10 @@ public class AuthServiceImpl implements AuthService {
 
         AuthResponse res = new AuthResponse();
         res.setToken(token);
-        res.setUserName(user.getUserName()); // 👈 getUserName()
+        res.setUserName(user.getUserName());
         res.setRole(user.getRole().getName().name());
-        res.setUserId(user.getId()); // 👈 set userId in AuthResponse
-        res.setEmail(user.getEmail()); // 👈 set email in AuthResponse
+        res.setUserId(user.getId());
+        res.setEmail(user.getEmail());
         res.setAvatar(user.getAvatar());
         return res;
     }
@@ -80,8 +80,8 @@ public class AuthServiceImpl implements AuthService {
         res.setToken(token);
         res.setUserName(user.getUserName());
         res.setRole(user.getRole().getName().name());
-        res.setUserId(user.getId()); // 👈 set userId in AuthResponse
-        res.setEmail(user.getEmail()); // 👈 set email in AuthResponse
+        res.setUserId(user.getId());
+        res.setEmail(user.getEmail());
         res.setAvatar(user.getAvatar());
         return res;
     }
