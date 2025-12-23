@@ -39,7 +39,6 @@ spring:
           starttls:
             enable: true
 
-# JWT config
 app:
   jwt:
     secret: ${JWT_SECRET}
