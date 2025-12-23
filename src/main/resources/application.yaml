@@ -8,6 +8,9 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  application:
+    name: splitfair
+
   jpa:
     hibernate:
       ddl-auto: none
