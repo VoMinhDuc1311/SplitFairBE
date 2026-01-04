@@ -1,6 +1,7 @@
 package com.anygroup.splitfair.controller;
 
 import com.anygroup.splitfair.dto.Auth.FirebaseTokenRequest;
+import com.anygroup.splitfair.dto.UserBankInfoRequest;
 import com.anygroup.splitfair.dto.UserDTO;
 import com.anygroup.splitfair.enums.UserStatus;
 import com.anygroup.splitfair.mapper.UserMapper;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -114,4 +116,13 @@ public class UserController {
             throw new RuntimeException("Could not read the file!");
         }
     }
+    @PostMapping("/me/bank-info")
+    public ResponseEntity<Void> updateMyBankInfo(
+            @RequestBody UserBankInfoRequest request,
+            Authentication authentication
+    ) {
+        userService.updateMyBankInfo(authentication.getName(), request);
+        return ResponseEntity.ok().build();
+    }
+
 }

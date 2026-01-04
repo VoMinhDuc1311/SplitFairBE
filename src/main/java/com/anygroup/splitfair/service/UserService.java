@@ -1,5 +1,6 @@
 package com.anygroup.splitfair.service;
 
+import com.anygroup.splitfair.dto.UserBankInfoRequest;
 import com.anygroup.splitfair.dto.UserDTO;
 import java.io.IOException;
 import java.util.List;
@@ -18,4 +19,5 @@ public interface UserService {
     List<UserDTO> searchUsers(String query);
 
     UserDTO uploadAvatar(UUID userId, MultipartFile file) throws IOException;
+    void updateMyBankInfo(String email, UserBankInfoRequest request);
 }

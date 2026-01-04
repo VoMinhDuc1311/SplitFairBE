@@ -1,5 +1,6 @@
 package com.anygroup.splitfair.service.impl;
 
+import com.anygroup.splitfair.dto.UserBankInfoRequest;
 import com.anygroup.splitfair.dto.UserDTO;
 import com.anygroup.splitfair.enums.RoleType;
 import com.anygroup.splitfair.enums.UserStatus;
@@ -134,4 +135,18 @@ public class UserServiceImpl implements UserService {
 
         return userMapper.toDTO(user);
     }
+
+    @Override
+    public void updateMyBankInfo(String email, UserBankInfoRequest request) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setBankCode(request.getBankCode());
+        user.setBankAccountNo(request.getBankAccountNo());
+        user.setBankAccountName(request.getBankAccountName());
+
+        userRepository.save(user);
+    }
+
 }
