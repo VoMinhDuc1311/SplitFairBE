@@ -2,6 +2,7 @@ package com.anygroup.splitfair.service;
 
 import com.anygroup.splitfair.dto.BalanceDTO;
 import com.anygroup.splitfair.dto.DebtDTO;
+import com.anygroup.splitfair.dto.VietQrDTO;
 import com.anygroup.splitfair.model.Expense;
 
 import java.math.BigDecimal;
@@ -26,4 +27,9 @@ public interface DebtService {
 
     //thêm
     void markBatchAsSettled(List<UUID> debtIds);
+    VietQrDTO requestPayment(UUID debtId, String email);
+
+    DebtDTO confirmPayment(UUID debtId, String email);
+    DebtDTO rejectPayment(UUID debtId, String email);
+
 }

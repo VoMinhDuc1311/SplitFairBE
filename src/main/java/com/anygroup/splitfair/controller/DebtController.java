@@ -2,9 +2,11 @@ package com.anygroup.splitfair.controller;
 
 import com.anygroup.splitfair.dto.BalanceDTO;
 import com.anygroup.splitfair.dto.DebtDTO;
+import com.anygroup.splitfair.dto.VietQrDTO;
 import com.anygroup.splitfair.service.DebtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -87,4 +89,36 @@ public class DebtController {
         debtService.markBatchAsSettled(debtIds);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/{id}/pay")
+    public ResponseEntity<VietQrDTO> payDebt(
+            @PathVariable UUID id,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                debtService.requestPayment(id, authentication.getName())
+        );
+    }
+
+
+    @PostMapping("/{id}/confirm")
+    public ResponseEntity<DebtDTO> confirmDebt(
+            @PathVariable UUID id,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                debtService.confirmPayment(id, authentication.getName())
+        );
+    }
+
+    @PostMapping("/{id}/reject")
+    public ResponseEntity<DebtDTO> rejectDebt(
+            @PathVariable UUID id,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                debtService.rejectPayment(id, authentication.getName())
+        );
+    }
+
 }

@@ -32,6 +32,15 @@ public class User {
 
     private String avatar;
 
+    @Column(name = "bank_code")
+    private String bankCode; // VCB, BIDV, ACB...
+
+    @Column(name = "bank_account_no")
+    private String bankAccountNo;
+
+    @Column(name = "bank_account_name")
+    private String bankAccountName;
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private UserStatus status = UserStatus.ACTIVE;

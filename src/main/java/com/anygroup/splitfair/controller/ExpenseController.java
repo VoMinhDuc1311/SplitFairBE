@@ -1,6 +1,7 @@
 package com.anygroup.splitfair.controller;
 
 import com.anygroup.splitfair.dto.ExpenseDTO;
+import com.anygroup.splitfair.dto.ExpenseFromOcrRequest;
 import com.anygroup.splitfair.dto.PaymentStatDTO;
 import com.anygroup.splitfair.dto.PersonalExpenseStatDTO;
 import com.anygroup.splitfair.repository.UserRepository;
@@ -108,6 +109,14 @@ public class ExpenseController {
             default -> throw new RuntimeException("Invalid statistic type");
         };
     }
+
+    @PostMapping("/from-ocr")
+    public ResponseEntity<ExpenseDTO> createExpenseFromOcr(
+            @RequestBody ExpenseFromOcrRequest request
+    ) {
+        return ResponseEntity.ok(expenseService.createExpenseFromOcr(request));
+    }
+
 
 
 

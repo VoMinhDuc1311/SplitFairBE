@@ -1,6 +1,7 @@
 package com.anygroup.splitfair.service.impl;
 
 import com.anygroup.splitfair.dto.ExpenseDTO;
+import com.anygroup.splitfair.dto.ExpenseFromOcrRequest;
 import com.anygroup.splitfair.dto.PaymentStatDTO;
 import com.anygroup.splitfair.dto.PersonalExpenseStatDTO;
 import com.anygroup.splitfair.enums.BillStatus;
@@ -354,5 +355,88 @@ public class ExpenseServiceImpl implements ExpenseService {
 
         return dto;
     }
+
+    @Override
+    @Transactional
+    public ExpenseDTO createExpenseFromOcr(ExpenseFromOcrRequest request) {
+
+        // 1. Validate tổng tiền
+        BigDecimal sum = request.getShares().stream()
+                .map(ExpenseFromOcrRequest.ShareItem::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (sum.compareTo(request.getTotalAmount()) != 0) {
+            throw new RuntimeException("Tổng tiền chia không khớp hóa đơn");
+        }
+
+        // 2. Lấy Bill
+        Bill bill = billRepository.findById(request.getBillId())
+                .orElseThrow(() -> new RuntimeException("Bill not found"));
+
+        // 3. Lấy người trả tiền
+        User payer = userRepository.findById(request.getPaidBy())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 4. Tạo Expense
+        Expense expense = Expense.builder()
+                .bill(bill)
+                .paidBy(payer)
+                .createdBy(payer)
+                .user(payer)
+                .description(request.getDescription())
+                .amount(request.getTotalAmount())
+                .status(ExpenseStatus.COMPLETED)
+                .build();
+
+        expense = expenseRepository.save(expense);
+
+        // 5. Tạo Share + Debt
+        for (ExpenseFromOcrRequest.ShareItem item : request.getShares()) {
+
+            User user = userRepository.findById(item.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Share
+            ExpenseShare share = ExpenseShare.builder()
+                    .expense(expense)
+                    .user(user)
+                    .shareAmount(item.getAmount())
+                    .percentage(
+                            item.getAmount()
+                                    .multiply(BigDecimal.valueOf(100))
+                                    .divide(request.getTotalAmount(), 2, RoundingMode.HALF_UP)
+                    )
+                    .status(
+                            user.getId().equals(payer.getId())
+                                    ? ShareStatus.PAID
+                                    : ShareStatus.UNPAID
+                    )
+                    .build();
+
+            expenseShareRepository.save(share);
+
+            // Debt (chỉ tạo nếu không phải người trả)
+            if (!user.getId().equals(payer.getId())) {
+                Debt debt = Debt.builder()
+                        .expense(expense)
+                        .amountFrom(user)
+                        .amountTo(payer)
+                        .amount(item.getAmount())
+                        .status(DebtStatus.UNSETTLED)
+                        .build();
+                debtRepository.save(debt);
+            }
+        }
+
+        // 6. Update Bill
+        bill.setTotalAmount(bill.getTotalAmount().add(request.getTotalAmount()));
+        if (bill.getStatus() == BillStatus.DRAFT) {
+            bill.setStatus(BillStatus.ACTIVE);
+        }
+        billRepository.save(bill);
+
+        return expenseMapper.toDTO(expense);
+    }
+
 
 }

@@ -2,6 +2,7 @@ package com.anygroup.splitfair.service.impl;
 
 import com.anygroup.splitfair.dto.BalanceDTO;
 import com.anygroup.splitfair.dto.DebtDTO;
+import com.anygroup.splitfair.dto.VietQrDTO;
 import com.anygroup.splitfair.enums.DebtStatus;
 import com.anygroup.splitfair.enums.NotificationType;
 import com.anygroup.splitfair.mapper.DebtMapper;
@@ -9,6 +10,7 @@ import com.anygroup.splitfair.model.*;
 import com.anygroup.splitfair.repository.*;
 import com.anygroup.splitfair.service.DebtService;
 import com.anygroup.splitfair.service.NotificationService;
+import com.anygroup.splitfair.service.VietQrService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +31,9 @@ public class DebtServiceImpl implements DebtService {
     private final ExpenseRepository expenseRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
-    private final BillRepository billRepository; // Inject BillRepository
+    private final BillRepository billRepository;
+    private final VietQrService vietQrService;
+// Inject BillRepository
 
 
     @Override
@@ -408,4 +412,100 @@ public class DebtServiceImpl implements DebtService {
                 })
                 .collect(Collectors.toList());
     }
+
+    //RequestPayment
+    @Override
+    @Transactional
+    public VietQrDTO requestPayment(UUID debtId, String email) {
+
+        Debt debt = debtRepository.findById(debtId)
+                .orElseThrow(() -> new RuntimeException("Debt not found"));
+
+        User payer = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!debt.getAmountFrom().getId().equals(payer.getId())) {
+            throw new RuntimeException("Bạn không phải người trả nợ");
+        }
+
+        if (debt.getStatus() != DebtStatus.UNSETTLED) {
+            throw new RuntimeException("Khoản nợ không hợp lệ");
+        }
+
+        // 1️⃣ tạo VietQR
+        VietQrDTO qr = vietQrService.generateDebtVietQr(debt);
+
+        // 2️⃣ cập nhật trạng thái
+        debt.setStatus(DebtStatus.PENDING_CONFIRMATION);
+        debtRepository.save(debt);
+
+        // 3️⃣ notification
+        notificationService.createNotification(
+                debt.getAmountTo().getId(),
+                "Yêu cầu xác nhận thanh toán",
+                payer.getUserName() + " đã chuyển tiền, vui lòng xác nhận",
+                NotificationType.DEBT_PAYMENT_REQUEST,
+                debt.getId().toString()
+        );
+
+        // 4️⃣ trả QR cho FE
+        return qr;
+    }
+
+
+    //ConfirmPayment
+    @Override
+    public DebtDTO confirmPayment(UUID debtId, String email) {
+        Debt debt = debtRepository.findById(debtId)
+                .orElseThrow(() -> new RuntimeException("Debt not found"));
+
+        User creditor = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!debt.getAmountTo().getId().equals(creditor.getId())) {
+            throw new RuntimeException("Bạn không phải chủ nợ");
+        }
+
+        if (debt.getStatus() != DebtStatus.PENDING_CONFIRMATION) {
+            throw new RuntimeException("Khoản nợ chưa được yêu cầu thanh toán");
+        }
+
+        // 👉 GỌI LẠI LOGIC CŨ (rất hay)
+        return markAsSettled(debtId);
+    }
+
+    //rejectPayment
+
+    @Override
+    public DebtDTO rejectPayment(UUID debtId, String email) {
+        Debt debt = debtRepository.findById(debtId)
+                .orElseThrow(() -> new RuntimeException("Debt not found"));
+
+        User creditor = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!debt.getAmountTo().getId().equals(creditor.getId())) {
+            throw new RuntimeException("Bạn không phải chủ nợ");
+        }
+
+        if (debt.getStatus() != DebtStatus.PENDING_CONFIRMATION) {
+            throw new RuntimeException("Khoản nợ không ở trạng thái chờ xác nhận");
+        }
+
+        debt.setStatus(DebtStatus.UNSETTLED);
+        debtRepository.save(debt);
+
+        // 🔔 Thông báo cho con nợ
+        notificationService.createNotification(
+                debt.getAmountFrom().getId(),
+                "Từ chối thanh toán",
+                creditor.getUserName() + " đã từ chối xác nhận khoản nợ",
+                NotificationType.DEBT_PAYMENT_REJECTED,
+                debt.getId().toString()
+        );
+
+        return debtMapper.toDTO(debt);
+    }
+
+
 }

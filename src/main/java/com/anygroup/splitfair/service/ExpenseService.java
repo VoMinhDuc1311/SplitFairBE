@@ -1,6 +1,7 @@
 package com.anygroup.splitfair.service;
 
 import com.anygroup.splitfair.dto.ExpenseDTO;
+import com.anygroup.splitfair.dto.ExpenseFromOcrRequest;
 import com.anygroup.splitfair.dto.PaymentStatDTO;
 import com.anygroup.splitfair.dto.PersonalExpenseStatDTO;
 
@@ -24,6 +25,9 @@ public interface ExpenseService {
     ExpenseDTO updateExpense(UUID id, ExpenseDTO dto);
 
     void deleteExpense(UUID id);
+
+    ExpenseDTO createExpenseFromOcr(ExpenseFromOcrRequest request);
+
 
     // Thống kê tổng số tiền mỗi user trong một group
     List<PaymentStatDTO> getPaymentStatsByGroup(UUID groupId);
