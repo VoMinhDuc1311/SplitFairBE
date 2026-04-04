@@ -3,84 +3,66 @@
 ## 📌 Overview
 SplitFair is an expense sharing system that helps users manage group expenses, track shared costs, and calculate balances between members.
 
-This project focuses on **Business Analysis**, system design, and backend development.
+This project focuses on **Business Analysis** and system design based on real-world scenarios.
 
 ---
 
 ## 🎯 Objectives
-- Manage group expenses efficiently
-- Track shared payments among members
-- Calculate debts and settlements automatically
-- Provide clear system workflows and data structure
+- Manage group expenses efficiently  
+- Track shared payments among members  
+- Calculate debts and settlements  
+- Design clear system workflows and data structure  
 
 ---
 
 ## 🧠 Business Analysis Artifacts
 
-### 📊 Use Case Diagram
-<img src="./usecase.png" width="700"/>
-
-### 🔄 Activity Diagram
-<img src="./activity.png" width="700"/>
-
 ### 🗄️ ERD (Entity Relationship Diagram)
-<img src="./erd.png" width="700"/>
+<img src="./ERD.png" width="700"/>
+
+---
+
+### 📊 Use Case Diagram
+<img src="./UseCase.png" width="700"/>
 
 ---
 
 ## 👥 Actors
-- Guest
-- Registered User
-- Group Member
-- Group Admin
+- Guest  
+- User  
+- Group Admin  
 
 ---
 
 ## 🚀 Main Features
 
 ### 🔐 Authentication
-- Register account
-- Login / Logout
-
-### 👤 User Management
-- Manage profile
-- View joined groups
+- Register account  
+- Login  
 
 ### 👥 Group Management
-- Create group
-- Add / invite members
-- Assign roles (Admin / Member)
+- Create group  
+- Add members  
+- Assign roles  
+- View members  
 
 ### 💰 Expense Management
-- Create bill
-- Add expense
-- Upload attachment
-- Define expense share (%)
-- Assign payer
+- Create bill  
+- Add expense  
+- View expenses  
 
-### 📊 Settlement & Tracking
-- Calculate balances
-- View debts between members
-- Record payments
-- View expense history
+### 📊 Settlement
+- View balance  
+- Record payment  
+- View history  
 
 ---
 
 ## 🛠️ Tech Stack
-- Java Spring Boot
-- MySQL
-- RESTful API
-- Docker
-- Git & GitHub
-
----
-
-## 📂 Project Structure
-- Backend source code: `/src`
-- Business Analysis diagrams:
-  - ERD
-  - Use Case
-  - Activity Diagram
+- Java Spring Boot  
+- MySQL  
+- RESTful API  
+- Git & GitHub  
 
 ---
 
